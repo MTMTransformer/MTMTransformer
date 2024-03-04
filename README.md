@@ -62,7 +62,8 @@ $ python sample.py config/sample_gpt2_type_2_method.py
 The template to generate text through unadulterated GPT-2 is below:
 
 ```
-$ python sample.py config/sample_gpt2.py ```
+$ python sample.py config/sample_gpt2.py 
+```
 
 
 ### Acknowledgements
