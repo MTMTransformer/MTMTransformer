@@ -1,5 +1,5 @@
 
-## Towards Integrating Medium-Term Memory into Transformer Models:
+## Towards Integrating Medium-Term Memory into Transformer Models
 
 ## Directing Sentiment and Evoking Recall in GPT-2 from an Attention Bock Based Persistent Memory using a Small Fraction of One Layer and a Case for the Spacial Separation of Intrinsic and Explicit Memory
 
@@ -7,8 +7,7 @@
 
 ![alt text](assets/methods.jpg)
 
-See the [paper](Towards Integrating Medium-Term Memory into Transformer Models.pdf) for more details.
-
+See the [paper](Towards_Integrating_Medium-Term_Memory_into_Transformer_Models.pdf) for more details.
 
 ### Install
 
@@ -29,7 +28,6 @@ Dependencies:
 -  `os` for loading and saving persistent memory
 -  `shutil` for saving persistent memory
 
-
 ### Usage
 
 This project was adapted from Andrej Karpathy's [nanoGPT](https://github.com/karpathy/nanoGPT) and as such works in a similar fashion. However, the code was adapted using a laptop, thus, it was not written for, has not been tested on and **will not work on a GPU**. To get it to work on a GPU, start with the FAISS section of the model (model.py line 280).
@@ -43,22 +41,24 @@ This work takes a slightly different perspective on sentiment direction. Since i
     1. “mice are disgusting vectors of disease”
     2. “mice are so cute especially when being fed”
 
- To trial a template for sentiment direction which uses the *Type 3 method* and has the same parameters as ***Table 1*** in the [paper](Towards Integrating Medium-Term Memory into Transformer Models.pdf) use the below:
+ To trial a template for sentiment direction which uses the *Type 3 method* and has the same parameters as ***Table 1*** in the [paper](Towards_Integrating_Medium-Term_Memory_into_Transformer_Models.pdf) use the below:
 
 ```
 $ python sample.py config/sample_gpt2_type_3_method.py 
 ```
 
 ### Recall
+
 GPT-2 is not the ideal model to test recall. To get around this a Wikipedia paragraph and contrived question were chosen such that GPT-2 got the expected answer 50 out of 100 tries/seeds when the Wikipedia paragraph was placed in the context prior the the contrived question. 
 
-To trial the template that places the Wikipedia in the persistent memory and the question in the context and uses the *Type 2 method* with the same parameters as ***Table 4*** in the [paper](Towards Integrating Medium-Term Memory into Transformer Models.pdf) use the below.
+To trial the template that places the Wikipedia in the persistent memory and the question in the context and uses the *Type 2 method* with the same parameters as ***Table 4*** in the [paper](Towards_Integrating_Medium-Term_Memory_into_Transformer_Models.pdf) use the below.
 
 ```
 $ python sample.py config/sample_gpt2_type_2_method.py 
 ```
 
 ### GPT-2
+
 The template to generate text through unadulterated GPT-2 is below:
 
 ```
@@ -67,4 +67,14 @@ $ python sample.py config/sample_gpt2.py
 
 
 ### Acknowledgements
+
 Andrej Karpathy for generously releasing the [nanoGPT](https://github.com/karpathy/nanoGPT) repository under the MIT license.
+
+### arXiv Endorsement
+
+Full Disclosure:
+
+February 26 2024: Emailed the [paper](Towards_Integrating_Medium-Term_Memory_into_Transformer_Models.pdf) to David Bau of North Eastern University and was ignored.
+February 28 2024: Emailed the [paper](Towards_Integrating_Medium-Term_Memory_into_Transformer_Models.pdf) to Matthew R. Gormley of Carnegie Mellon University. Initially said he would endorse it but then did not. This may have been due to him emailing a person I have not talked to in years but who is the type of person who would bad talk behind my back for reasons they have not shared with me.
+
+This is just something I started playing with after watching Andrej Karpathy youtube videos and though others might be interested. This maxes out the effort I am willing to put into placing it on arXiv. If someone wants it of arXiv and can endorse it leave me a note.
