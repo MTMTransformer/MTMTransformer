@@ -1,5 +1,5 @@
 
-## Towards Integrating Medium-Term Memory into Transformer Models
+## Towards Integrating Medium-Term Memory into Transformer Models:
 
 ## Directing Sentiment and Evoking Recall in GPT-2 from an Attention Bock Based Persistent Memory using a Small Fraction of One Layer and a Case for the Spacial Separation of Intrinsic and Explicit Memory
 
