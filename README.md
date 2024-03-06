@@ -78,4 +78,4 @@ February 26 2024: Emailed the [paper](Towards_Integrating_Medium-Term_Memory_int
 
 February 28 2024: Emailed the [paper](Towards_Integrating_Medium-Term_Memory_into_Transformer_Models.pdf) to Matthew R. Gormley of Carnegie Mellon University. Initially said he would endorse it but then did not. This may have been due to him emailing a person I have not talked to in years but who is the type of person who would bad talk behind my back for reasons they have not shared with me.
 
-This is just something I started playing with after watching Andrej Karpathy youtube videos and though others might be interested. This maxes out the effort I am willing to put into placing it on arXiv. If someone wants it of arXiv and can endorse it leave me a note.
+This is just something I started playing with after becoming curious about transformers and thought others might be interested. This maxes out the effort I am willing to put into placing it on arXiv. If someone wants it on arXiv and can endorse it leave me a note.
