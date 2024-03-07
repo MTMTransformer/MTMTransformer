@@ -72,7 +72,7 @@ Andrej Karpathy for generously releasing the [nanoGPT](https://github.com/karpat
 
 ### arXiv Endorsement
 
-Full Disclosure:
+Tried twice:
 
 February 26 2024: Emailed the [paper](Towards_Integrating_Medium-Term_Memory_into_Transformer_Models.pdf) to David Bau of North Eastern University and was ignored.
 
