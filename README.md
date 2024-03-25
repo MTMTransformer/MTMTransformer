@@ -67,7 +67,7 @@ $ python sample.py config/sample_gpt2.py
 
 ### Using More Capable Models
 
-If someone is curious enough and has the resources to try this out on a more capable model I would be incredibly interested to learn how it worked out. Perhaps leave a note in issues.
+It is difficult to determine from GPT-2 if this is an effective method. If someone is curious enough to try this out on a more capable model I would be incredibly interested to learn how it worked out. Perhaps leave a note in issues.
 
 ### Acknowledgements
 
