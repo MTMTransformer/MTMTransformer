@@ -21,5 +21,6 @@ enc = tiktoken.get_encoding("gpt2")
 encode = lambda s: enc.encode(s, allowed_special={"<|endoftext|>"})
 remove_bookkeeping_token_mem_size = len(encode(bookkeeping_token)) # remove bookkeeping token from front of memory before storing. normally "\n" for a size of 1. section 2.2.2 in paper
 bookkeeping_frac = 0.9 # a softmax value. all bookkeeping tokens less than the softmax vale are set to 0. 0 use all bookkeeping tokens. 1 use no bookkeeping tokens. Equation 4 in paper (BF)
-
+unadulterated_gpt = True # genetate unadulterated GPT text prior to text gereated by the method
+method_text = "Table 1, Method Type 3: Sentiment Direction" # label for generated text
 start = "\nCats are horrible"

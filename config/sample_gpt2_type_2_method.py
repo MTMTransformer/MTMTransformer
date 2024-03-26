@@ -23,7 +23,9 @@ enc = tiktoken.get_encoding("gpt2")
 encode = lambda s: enc.encode(s, allowed_special={"<|endoftext|>"})
 remove_bookkeeping_token_mem_size = len(encode(bookkeeping_token)) # remove bookkeeping token from front of memory before storing. normally "\n" for a size of 1. section 2.2.2 in paper
 bookkeeping_frac = 0.9 # a softmax value. all bookkeeping tokens less than the softmax vale are set to 0. 0 use all bookkeeping tokens. 1 use no bookkeeping tokens. Equation 4 in paper (BF)
-
+unadulterated_gpt = True # genetate unadulterated GPT text prior to text gereated by the method
+method_text = "Method Type 2: Recall of " # label for generated text
 start = "\nThe name of the city with the third-largest metropolitan area in Canada is" 
 substitute = "Toronto" # original Wikipedia text used Vancouver see Figure 13 in the paper for the results from various substitutes
 memory  = f"{bookkeeping_token}Located in the Lower Mainland region of British Columbia, {substitute} is a major city in western Canada. As the most populous city in the province, the 2021 Canadian census recorded 662,248 people in the city, up from 631,486 in 2016. The Metro {substitute} area had a population of 2.6 million in 2021, making it the third-largest metropolitan area in Canada. Greater {substitute}, along with the Fraser Valley, comprises the Lower Mainland with a regional population of over 3 million. {substitute} has the highest population density in Canada, with over 5,700 people per square kilometre, and fourth highest in North America (after New York City, San Francisco, and Mexico City)."
+method_text = f"Table 4, Method Type 2: Recall of {substitute}" # label for generated text

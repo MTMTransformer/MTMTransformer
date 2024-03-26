@@ -2,6 +2,7 @@
 Sample from a trained model
 """
 import os
+import random
 import pickle
 from contextlib import nullcontext
 import torch
@@ -12,7 +13,7 @@ from model import GPTConfig, GPT
 init_from = 'gpt2' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
 out_dir = 'out' # ignored if init_from is not 'resume'
 start = "" # initial text to be added to the context. or "<|endoftext|>" or etc. Can also specify a file, use as: "FILE:prompt.txt"
-num_samples = 1 # number of samples to draw
+num_samples = 3 # number of samples to draw
 max_new_tokens = 50 # number of tokens generated in each sample
 temperature = 0.8 # 1.0 = no change, < 1.0 = less random, > 1.0 = more random, in predictions
 top_k = 200 # retain only the top_k most likely tokens, clamp others to have 0 probability
@@ -31,7 +32,9 @@ resid_only = True # Turns on/off residual only. True stops the current value bei
 resid_frac = 0.1  # (residual) scale factor for adding residual. Between 0 and 1, 0 turns it off. See figure 1 in paper
 remove_bookkeeping_token_mem_size = 1 # remove bookkeeping token from front of memory before storing. normally "\n" for a size of 1. section 2.2.2 in paper
 bookkeeping_frac = 0.0 # a softmax value. all bookkeeping tokens less than the softmax vale are set to 0. 0 use all bookkeeping tokens. 1 use no bookkeeping tokens. Equation 4 in paper (BF)
-memory = "" # The persistent memory. Intrinsic (sentiment) or Explicit Memory (recall)
+memory = "" # The persistent memory. Inmplicit (sentiment) or Explicit Memory (recall)
+unadulterated_gpt = False # genetate unadulterated GPT text prior to text gereated by the method
+method_text = "No Memory" # label for generated text
 exec(open('configurator.py').read()) # overrides from command line or config file
 # -----------------------------------------------------------------------------
 torch.manual_seed(seed)
@@ -122,9 +125,26 @@ with torch.no_grad():
                 if k > 0:                
                     model.transformer.h[layer].attn.store_mem = False
                     model.transformer.h[layer].attn.knn_num = knn_num[layer] 
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed(seed)
         for k in range(num_samples):
+            torch.manual_seed(seed)
+            torch.cuda.manual_seed(seed)
+            print(f"\nseed: {seed}\n")
+            if unadulterated_gpt:
+                for layer, k in enumerate(knn_num):
+                    if k > 0: 
+                        model.transformer.h[layer].attn.knn_num = 0                
+                y = model.generate(x, max_new_tokens, temperature=temperature, top_k=top_k)
+                for layer, k in enumerate(knn_num):
+                    if k > 0: 
+                        model.transformer.h[layer].attn.knn_num = knn_num[layer]
+                torch.manual_seed(seed)
+                torch.cuda.manual_seed(seed)
+                print("Unadulterated GPT-2 Genetated Text\n-----")
+                print(decode(y[0].tolist()))
+                print("\n------------------\n")
+                             
             y = model.generate(x, max_new_tokens, temperature=temperature, top_k=top_k)
+            print(f"{method_text}\n-----")
             print(decode(y[0].tolist()))
-            print('---------------')
+            print('____________________________________________________________')
+            seed = random.randrange(1000,9999,1)
