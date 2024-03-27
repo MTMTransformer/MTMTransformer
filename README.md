@@ -30,7 +30,7 @@ Dependencies:
 
 ### Usage
 
-This project was adapted from Andrej Karpathy's [nanoGPT](https://github.com/karpathy/nanoGPT) and as such works in a similar fashion. However, the code was adapted without a GPU, thus, it was not written for, has not been tested on and **will not work on a GPU**. To get it to work on a GPU, start with the FAISS section of the model (model.py line 280).
+This project was adapted from Andrej Karpathy's [nanoGPT](https://github.com/karpathy/nanoGPT) and as such works in a similar fashion. However, the code was adapted without a GPU, thus, it was not written for, has not been tested on and **will not work on a GPU**. To get it to work on a GPU, start with the FAISS section of the model (model.py line 280, [FAISS GPU documentation](https://github.com/facebookresearch/faiss/wiki/Faiss-on-the-GPU)).
 
 Three templates have been included in this repository. One which demonstrates directing sentiment, one that demonstrates recall and one which produces text from the unadulterated version of GPT-2. To explore changing the various parameters of the methods or change the persistent memory, edit/create new templates from the templates in the config directory.
 
@@ -67,7 +67,7 @@ $ python sample.py config/sample_gpt2.py
 
 ### Using More Capable Models
 
-It is difficult to determine from GPT-2 if this is an effective method. If someone is curious enough to try this out on a more capable model I would be incredibly interested to learn how it worked out. Perhaps leave a note in issues.
+It is difficult to determine from GPT-2 if this will be an effective method. If someone is curious enough to try this out on a more capable model I would be incredibly interested to learn how it worked out. Perhaps leave a note in issues.
 
 ### Acknowledgements
 
