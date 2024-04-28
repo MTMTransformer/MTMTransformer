@@ -8,6 +8,7 @@ from contextlib import nullcontext
 import torch
 import tiktoken
 from model import GPTConfig, GPT
+# from model_gpu import GPTConfig, GPT
 
 # -----------------------------------------------------------------------------
 init_from = 'gpt2' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
@@ -36,6 +37,13 @@ memory = "" # The persistent memory. Inmplicit (sentiment) or Explicit Memory (r
 unadulterated_gpt = False # genetate unadulterated GPT text prior to text gereated by the method
 method_text = "No Memory" # label for generated text
 exec(open('configurator.py').read()) # overrides from command line or config file
+# -----------------------------------------------------------------------------
+
+if device == 'cpu':
+    from model import GPTConfig, GPT
+else:
+    from model_gpu import GPTConfig, GPT
+
 # -----------------------------------------------------------------------------
 torch.manual_seed(seed)
 torch.cuda.manual_seed(seed)

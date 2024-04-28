@@ -41,7 +41,7 @@ class LayerNorm(nn.Module):
 
 class CausalSelfAttention(nn.Module):
 
-    def __init__(self, config, n):
+    def __init__(self, config, res, n):
         super().__init__()
         assert config.n_embd % config.n_head == 0
 
@@ -54,7 +54,11 @@ class CausalSelfAttention(nn.Module):
         self.layer_num = n
 
         # fraction of mem stored/retrieved --- 1 / (frac * T) < softmax of query x key (MF)
-        self.store_mem = config.store_mem
+        if isinstance(config.store_mem, list):
+            assert len(config.store_mem) >= config.n_layer, "list store_mem does not have as many layers as the model"
+            self.knn_num = config.store_mem[n]
+        else:
+            self.store_mem = config.store_mem
         if isinstance(config.mem_frac, list):
             assert len(config.mem_frac) >= config.n_layer, "list mem_frac does not have as many layers as the model"
             self.mem_frac = config.mem_frac[n]
@@ -87,14 +91,18 @@ class CausalSelfAttention(nn.Module):
 
         # long term memory
         self.remove_bookkeeping_token_mem_size = config.remove_bookkeeping_token_mem_size
+        self.mem_store = config.mem_store
+        self.load_mem_store = config.load_mem_store
         self.keyStore = []
         self.valueStore = []
         self.index = []
-        self.clear()
-        self.mem_store = config.mem_store
-        self.load_mem_store = config.load_mem_store
-        if config.load_mem_store and self.knn_num > 0:
-            self.load_memStore()
+        self.res = res
+        if self.store_mem or self.knn_num > 0:
+            self.clear()
+            if config.load_mem_store and self.knn_num > 0:
+                self.load_memStore(res)
+            else:
+                self.init_faiss_gpu()
 
     def forward(self, x):
         B, T, C = x.size() # batch size, sequence length, embedding dimensionality (n_embd)
@@ -165,7 +173,6 @@ class CausalSelfAttention(nn.Module):
         vList = value.transpose(0, 1).view(h, -1, d)
         qList = query.transpose(0, 1).view(h, -1, d)
         attList = att.transpose(0, 1)
-
         # get memory for each head
         for i in range(self.n_head):
             # prepare list of indicies which knn will be applied to
@@ -255,7 +262,6 @@ class CausalSelfAttention(nn.Module):
         v = value.transpose(0, 1).contiguous().view(-1, d)
         v = v.scatter_(0, atts_found, vals_found)
         v = v.view(self.n_head, b, t, d).transpose(0, 1)
-
         return v
 
     @torch.no_grad()
@@ -276,17 +282,26 @@ class CausalSelfAttention(nn.Module):
                 self.keyStore[i] = torch.cat((self.keyStore[i], keyList[i].squeeze(0)), dim=0)
                 self.valueStore[i] = torch.cat((self.valueStore[i], valueList[i].squeeze(0)), dim=0)
 
-            # make index flat full search index on a cpu
-            self.index[i] = faiss.IndexFlatL2(d)
+            # clear gpu index flat full search and add
+            self.index[i].reset()
             self.index[i].add(self.keyStore[i].contiguous().detach())
+            # print(f"Head {i}: index length: {(self.index[i].ntotal)}")
+
+
+    @torch.no_grad()
+    def init_faiss_gpu(self):
+        # create empty index list
+        self.index = [None for i in range(self.n_head)]
+        # create empty index list on gpu
+        for i in range(self.n_head):
+            index_flat = faiss.IndexFlatL2(self.n_embd // self.n_head)
+            self.index[i] = faiss.index_cpu_to_gpu(self.res, 0, index_flat)
 
     @torch.no_grad()
     def clear(self):
-        z = torch.zeros((1, self.n_embd // self.n_head))
-        ninf = (torch.ones((1, self.n_embd // self.n_head)))*float('-inf')
-        self.keyStore = [ninf for i in range(self.n_head)] # -inf required to produce 0 after softmax
-        self.valueStore = [z for i in range(self.n_head)]
-        self.index = [None for i in range(self.n_head)]
+        # clear memory stores
+        self.valueStore = [torch.zeros(1, self.n_embd // self.n_head, device="cuda") for i in range(self.n_head)] # -inf required to produce 0 after softmax
+        self.keyStore  = [(torch.ones((1, self.n_embd // self.n_head), device="cuda"))*float('-inf') for i in range(self.n_head)]
     
     @torch.no_grad()
     def save_memStore(self, text):
@@ -318,9 +333,11 @@ class CausalSelfAttention(nn.Module):
             f.write(text)
 
     @torch.no_grad()
-    def load_memStore(self):
+    def load_memStore(self, res):
         keymem = 0
         valmem = 0
+        # create empty index list
+        self.index = [None for i in range(self.n_head)]
         folder = ["keyStore", "valueStore", "index" ]
         for name in folder:
             path = f"{self.mem_store}/{name}/{self.layer_num}"
@@ -341,8 +358,10 @@ class CausalSelfAttention(nn.Module):
             valmem += self.valueStore[idx].shape[0]
             
             assert os.path.isfile(f"{self.mem_store}/index/{self.layer_num}/{idx}.faiss"), f"file: {self.mem_store}/index/{self.layer_num}/{idx}.faiss doesn't exist"
-            self.index[idx] = faiss.read_index( f"{self.mem_store}/index/{self.layer_num}/{idx}.faiss")
-            assert self.index[idx] != None, f"index{idx} does not exist"
+            index_flat = None
+            index_flat = faiss.read_index( f"{self.mem_store}/index/{self.layer_num}/{idx}.faiss")
+            assert index_flat != None, f"index{idx} does not exist"
+            self.index[idx] = faiss.index_cpu_to_gpu(res, 0, index_flat)
 
     @torch.no_grad()
     def set_flash(self):
@@ -354,7 +373,7 @@ class CausalSelfAttention(nn.Module):
         if not self.flash:
             # print("WARNING: using slow attention. Flash Attention requires PyTorch >= 2.0")
             # causal mask to ensure that attention is only applied to the left in the input sequence
-            self.register_buffer("bias", torch.tril(torch.ones(self.block_size, self.block_size))
+            self.register_buffer("bias", torch.tril(torch.ones(self.block_size, self.block_size)).cuda()
                                         .view(1, 1, self.block_size, self.block_size))  
     
     @torch.no_grad()
@@ -384,10 +403,10 @@ class MLP(nn.Module):
 
 class Block(nn.Module):
 
-    def __init__(self, config, n):
+    def __init__(self, config, res, n):
         super().__init__()
         self.ln_1 = LayerNorm(config.n_embd, bias=config.bias)
-        self.attn = CausalSelfAttention(config, n)
+        self.attn = CausalSelfAttention(config, res, n)
         self.ln_2 = LayerNorm(config.n_embd, bias=config.bias)
         self.mlp = MLP(config)
 
@@ -404,6 +423,7 @@ class GPTConfig:
     n_head: int = 12
     n_embd: int = 768
     dropout: float = 0.0
+    faissTempMemoryGPU: int = 1024 # faiss GPU temp memory in MBs
     bias: bool = True # True: bias in Linears and LayerNorms, like GPT-2. False: a bit better and faster
     store_mem: bool = False  # whether to store memory   
     knn_num: list = field(default_factory=lambda: [0] * GPTConfig.n_layer)  # number of memories to retrieve from specific layers
@@ -424,11 +444,14 @@ class GPT(nn.Module):
         assert config.block_size is not None
         self.config = config
 
+        self.res = faiss.StandardGpuResources()
+        self.res.setTempMemory(config.faissTempMemoryGPU)
+
         self.transformer = nn.ModuleDict(dict(
             wte = nn.Embedding(config.vocab_size, config.n_embd),
             wpe = nn.Embedding(config.block_size, config.n_embd),
             drop = nn.Dropout(config.dropout),
-            h = nn.ModuleList([Block(config, i) for i in range(config.n_layer)]),
+            h = nn.ModuleList([Block(config, self.res, i) for i in range(config.n_layer)]),
             ln_f = LayerNorm(config.n_embd, bias=config.bias),
         ))
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
@@ -470,7 +493,6 @@ class GPT(nn.Module):
 
     def forward(self, idx, targets=None):
         device = idx.device
-        assert device == torch.device('cpu'), "This project was written on a laptop and thus only works on a cpu.\n\nTry adjusting the FAISS code in CausalSelfAttention.knn_store() to get it to work on a GPU\n"
 
         b, t = idx.size()
         assert t <= self.config.block_size, f"Cannot forward sequence of length {t}, block size is only {self.config.block_size}"
