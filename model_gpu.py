@@ -348,12 +348,12 @@ class CausalSelfAttention(nn.Module):
         
         for idx in range(self.n_head):
             assert os.path.isfile(f"{self.mem_store}/keyStore/{self.layer_num}/{idx}.pt"), f"file: {self.mem_store}/keyStore/{self.layer_num}/{idx}.pt doesn't exist"
-            self.keyStore[idx] = torch.load(f"{self.mem_store}/keyStore/{self.layer_num}/{idx}.pt")
+            self.keyStore[idx] = torch.load(f"{self.mem_store}/keyStore/{self.layer_num}/{idx}.pt", map_location="cuda")
             assert self.keyStore[idx] != None, f"keyStore{idx} does not exist"
             keymem += self.keyStore[idx].shape[0]
             
             assert os.path.isfile(f"{self.mem_store}/valueStore/{self.layer_num}/{idx}.pt"), f"file: {self.mem_store}/valueStore/{self.layer_num}/{idx}.pt doesn't exist"
-            self.valueStore[idx] = torch.load(f"{self.mem_store}/valueStore/{self.layer_num}/{idx}.pt")
+            self.valueStore[idx] = torch.load(f"{self.mem_store}/valueStore/{self.layer_num}/{idx}.pt", map_location="cuda")
             assert self.valueStore[idx] != None, f"valueStore{idx} does not exist"
             valmem += self.valueStore[idx].shape[0]
             
